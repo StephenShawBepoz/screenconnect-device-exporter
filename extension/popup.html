@@ -1,0 +1,350 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root {
+      --bg: #1a1f2e;
+      --surface: #232939;
+      --surface-hover: #2a3148;
+      --border: #333a4d;
+      --text: #e1e4eb;
+      --text-muted: #8b92a5;
+      --accent: #00c896;
+      --accent-hover: #00e0a8;
+      --accent-dim: rgba(0, 200, 150, 0.12);
+      --danger: #f05e5e;
+      --danger-hover: #ff7070;
+      --danger-dim: rgba(240, 94, 94, 0.12);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      width: 340px;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-dim);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-icon svg { width: 16px; height: 16px; }
+
+    .header h1 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .header .version {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    input[type="number"] {
+      width: 72px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 4px 8px;
+      text-align: right;
+      outline: none;
+    }
+
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 4px 8px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .checkbox-field {
+      cursor: pointer;
+    }
+
+    .checkbox-field input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .checkbox-field input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .checkbox-field input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4.5px;
+      top: 1.5px;
+      width: 4px;
+      height: 8px;
+      border: solid var(--bg);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    #run {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    #run:hover { background: var(--accent-hover); }
+    #run:active { transform: scale(0.98); }
+
+    #stop {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border: 1px solid rgba(240, 94, 94, 0.25);
+    }
+    #stop:hover { background: rgba(240, 94, 94, 0.18); color: var(--danger-hover); }
+    #stop:active { transform: scale(0.98); }
+
+    .progress-container {
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .progress-container.active { display: block; }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .progress-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--surface);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .log-header {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    #status {
+      font-size: 11.5px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      max-height: 160px;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      line-height: 1.6;
+    }
+
+    #status::-webkit-scrollbar { width: 5px; }
+    #status::-webkit-scrollbar-track { background: transparent; }
+    #status::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .log-time { color: #5a6178; }
+    .log-ok { color: var(--accent); }
+    .log-err { color: var(--danger); }
+
+    .report-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 6px 0;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+      transition: color 0.15s ease;
+    }
+    .report-link:hover { color: var(--text); }
+    .report-link svg { width: 13px; height: 13px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent)">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+    </div>
+    <h1>Device Exporter</h1>
+    <span class="version">v2.0.0</span>
+  </div>
+
+  <div class="settings">
+    <div class="field">
+      <span class="field-label">Delay between devices (ms)</span>
+      <input id="delay" type="number" value="600" min="200" step="100" />
+    </div>
+    <div class="field">
+      <span class="field-label">Export format</span>
+      <select id="format">
+        <option value="csv">CSV</option>
+        <option value="json">JSON</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="run">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export to CSV
+    </button>
+    <button id="stop">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <rect x="6" y="6" width="12" height="12" rx="2"/>
+      </svg>
+      Stop
+    </button>
+  </div>
+
+  <div class="progress-container" id="progressContainer">
+    <div class="progress-header">
+      <span class="progress-label">Collecting devices...</span>
+      <span class="progress-count" id="progressCount">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="log-header">Activity Log</div>
+  <div id="status">Idle. Ready to export.</div>
+
+  <a class="report-link" href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v2.0.0%0ADescribe%20the%20issue%3A%0A%0A">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="16" x2="12" y2="12"/>
+      <line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>
+    Report an issue
+  </a>
+
+  <script src="popup.js"></script>
+</body>
+</html>

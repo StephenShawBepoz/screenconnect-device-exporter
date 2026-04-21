@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "ScreenConnect Device Exporter",
+  "version": "2.0.0",
+  "description": "Iterates the device list in ScreenConnect, collects details, and exports to CSV or JSON.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["*://*.screenconnect.com/*"],
+  "action": {
+    "default_title": "ScreenConnect Device Exporter",
+    "default_popup": "popup.html"
+  },
+  "icons": {}
+}

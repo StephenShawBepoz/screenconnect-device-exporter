@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScreenConnect Device Exporter</title>
+  <style>
+    :root {
+      --bg: #0f1219;
+      --surface: #1a1f2e;
+      --surface-2: #232939;
+      --border: #333a4d;
+      --text: #e1e4eb;
+      --text-muted: #8b92a5;
+      --accent: #00c896;
+      --accent-hover: #00e0a8;
+      --accent-dim: rgba(0, 200, 150, 0.10);
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--accent-dim);
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .hero-icon svg { width: 28px; height: 28px; color: var(--accent); }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .hero .version {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* Download button */
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: var(--radius);
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .download-btn:hover { background: var(--accent-hover); }
+    .download-btn:active { transform: scale(0.98); }
+    .download-btn svg { width: 18px; height: 18px; }
+
+    /* Section */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .step-content code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    /* Fields table */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .field-tag {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    /* Notes */
+    .note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .note strong { color: var(--text); }
+
+    /* Footer */
+    .footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer a:hover { color: var(--text); }
+
+    @media (max-width: 500px) {
+      .hero h1 { font-size: 22px; }
+      .fields-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="hero">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </div>
+      <span class="version">v2.0.0</span>
+      <h1>ScreenConnect Device Exporter</h1>
+      <p>A Chrome extension that exports device details from ScreenConnect to CSV — including hardware specs, RAM, OS, and session info.</p>
+      <a class="download-btn" href="screenconnect-device-exporter.zip" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Extension (.zip)
+      </a>
+    </div>
+
+    <div class="section">
+      <h2>Installation</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Download and unzip</h3>
+            <p>Click the download button above and extract the zip file to a folder on your computer.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Open Chrome Extensions</h3>
+            <p>Navigate to <code>chrome://extensions</code> in your browser and enable <strong>Developer mode</strong> (toggle in the top right).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Load the extension</h3>
+            <p>Click <strong>Load unpacked</strong> and select the folder you extracted in step 1.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Pin it (optional)</h3>
+            <p>Click the puzzle piece icon in Chrome's toolbar, then pin <strong>ScreenConnect Device Exporter</strong> for easy access.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How to Use</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Navigate to your device group</h3>
+            <p>Open ScreenConnect and go to the Access page. Select the session group containing the devices you want to export.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Scroll to load all devices</h3>
+            <p>ScreenConnect lazy-loads rows. Scroll through the full device list to make sure all devices are rendered before exporting.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Click Export to CSV</h3>
+            <p>Click the extension icon in the toolbar, then press <strong>Export to CSV</strong>. The extension will click through each device to collect full hardware details.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Wait for the scan to complete</h3>
+            <p>The progress bar shows how many devices have been scanned. A CSV file will download automatically when finished. You can click <strong>Stop</strong> at any time to export what's been collected so far.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Exported Fields</h2>
+      <div class="fields-grid">
+        <div class="field-tag">Name</div>
+        <div class="field-tag">Online / Offline</div>
+        <div class="field-tag">GROUP</div>
+        <div class="field-tag">STATE</div>
+        <div class="field-tag">Business Unit</div>
+        <div class="field-tag">Device Type</div>
+        <div class="field-tag">Machine Name</div>
+        <div class="field-tag">Manufacturer &amp; Model</div>
+        <div class="field-tag">Operating System</div>
+        <div class="field-tag">Processor</div>
+        <div class="field-tag">RAM</div>
+        <div class="field-tag">.NET Version</div>
+        <div class="field-tag">POS Version</div>
+        <div class="field-tag">Access Restriction Level</div>
+        <div class="field-tag">SystemID</div>
+        <div class="field-tag">User</div>
+        <div class="field-tag">Idle Time</div>
+        <div class="field-tag">OS Install Date</div>
+        <div class="field-tag">Machine Product / Serial</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="note">
+        <strong>Tip:</strong> The default delay between devices is 600ms. If you have a slow connection to ScreenConnect, increase this value in the extension popup to give the detail panel more time to load.
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Built by the Bepoz team &middot; <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue">Report an issue</a></p>
+    </div>
+
+  </div>
+</body>
+</html>
