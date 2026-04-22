@@ -98,10 +98,25 @@
       cursor: pointer;
     }
 
-    select:focus {
+    select:focus, input[type="text"]:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent-dim);
     }
+
+    .search-field { gap: 8px; }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 5px 8px;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder { color: var(--text-muted); opacity: 0.6; }
 
     .actions {
       margin-bottom: 14px;
@@ -222,6 +237,12 @@
         <option value="Support">Support</option>
         <option value="Meeting">Meeting</option>
       </select>
+    </div>
+    <div class="field search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:var(--text-muted);flex-shrink:0">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="search" type="text" placeholder="Filter by name (e.g. Kickin)" />
     </div>
   </div>
 

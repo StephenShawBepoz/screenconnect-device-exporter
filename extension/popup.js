@@ -3,6 +3,7 @@ const runBtn      = document.getElementById('run');
 const runBtnText  = runBtn.querySelector('span');
 const formatEl    = document.getElementById('format');
 const sessionType = document.getElementById('sessionType');
+const searchEl    = document.getElementById('search');
 
 /* ---------- helpers ---------- */
 
@@ -71,6 +72,7 @@ const FIELDS = [
 runBtn.addEventListener('click', async () => {
   const format = formatEl.value;
   const typeFilter = sessionType.value;
+  const nameSearch = searchEl.value.trim();
 
   /* 1. Validate tab */
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -78,16 +80,25 @@ runBtn.addEventListener('click', async () => {
 
   const origin = new URL(tab.url).origin;
 
-  /* 2. Build Report API URL */
+  /* 2. Build Report API URL with filters */
   const endpoint = format === 'json' ? 'Report.json' : 'Report.csv';
   const params = new URLSearchParams();
   params.set('ReportType', 'Session');
   FIELDS.forEach(f => params.append('SelectFields', f));
-  if (typeFilter) params.set('Filter', `SessionType='${typeFilter}'`);
+
+  const filters = [];
+  if (typeFilter) filters.push(`SessionType='${typeFilter}'`);
+  if (nameSearch) {
+    // Escape single quotes in the search term
+    const safe = nameSearch.replace(/'/g, "''");
+    filters.push(`Name LIKE '%${safe}%'`);
+  }
+  if (filters.length) params.set('Filter', filters.join(' AND '));
   const reportUrl = `${origin}/${endpoint}?${params.toString()}`;
 
   /* 3. Loading state */
-  log(`Fetching${typeFilter ? ` ${typeFilter}` : ''} devices via Report API...`);
+  const desc = [typeFilter, nameSearch ? `"${nameSearch}"` : ''].filter(Boolean).join(' ');
+  log(`Fetching${desc ? ` ${desc}` : ''} devices via Report API...`);
   runBtn.disabled = true;
   runBtn.querySelector('svg').outerHTML =
     '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
