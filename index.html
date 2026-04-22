@@ -543,6 +543,10 @@
             <span class="mockup-field-label">Session type</span>
             <span class="mockup-field-value">Access</span>
           </div>
+          <div class="mockup-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span style="flex:1;font-size:12px;color:var(--accent);">Kickin</span>
+          </div>
           <div class="mockup-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -552,8 +556,8 @@
             Export CSV
           </div>
           <div class="mockup-log">
-            <span class="ok">[10:32:01] Exported 247 device(s) as CSV.</span><br>
-            [10:32:00] Fetching Access devices via Report API...
+            <span class="ok">[10:32:01] Exported 4 device(s) as CSV.</span><br>
+            [10:32:00] Fetching Access "Kickin" devices...
           </div>
           <div class="mockup-api">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -577,42 +581,42 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
         <h3>Instant Export</h3>
-        <p>Single API call fetches all devices. No delays, no scrolling.</p>
+        <p>Single API call fetches all devices in seconds. No clicking through one by one.</p>
       </div>
       <div class="feature">
         <div class="feature-icon blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         </div>
-        <h3>35+ Data Fields</h3>
-        <p>Hardware specs, serial numbers, network, OS, user info, and more.</p>
+        <h3>Smart Enrichment</h3>
+        <p>Auto-detects OS end-of-life dates, processor age, and splits state from location fields.</p>
       </div>
       <div class="feature">
         <div class="feature-icon purple">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <h3>No Credentials</h3>
-        <p>Uses your existing browser login. No API keys to configure.</p>
+        <h3>Name Search</h3>
+        <p>Filter devices by name &mdash; type "Kickin" to export only matching devices.</p>
       </div>
       <div class="feature">
         <div class="feature-icon orange">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </div>
         <h3>Any Instance</h3>
-        <p>Works on screenconnect.com, self-hosted, and custom domains.</p>
+        <p>Works on screenconnect.com, self-hosted, and custom domains. No API keys needed.</p>
       </div>
       <div class="feature">
         <div class="feature-icon pink">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
         <h3>CSV or JSON</h3>
-        <p>Export to spreadsheet-ready CSV or structured JSON.</p>
+        <p>Spreadsheet-ready CSV with clean headers, or structured JSON for automation.</p>
       </div>
       <div class="feature">
         <div class="feature-icon green">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
         <h3>Session Filtering</h3>
-        <p>Filter by Access, Support, or Meeting sessions.</p>
+        <p>Filter by Access, Support, or Meeting. Shows device count after each export.</p>
       </div>
     </div>
 
@@ -801,39 +805,34 @@
     <div id="fields" class="section reveal">
       <div class="section-label">Data</div>
       <h2>What gets exported</h2>
-      <p class="section-desc">Every row includes these fields when available. That's 35+ columns of device intelligence.</p>
+      <p class="section-desc">Clean, BDM-friendly column names with smart data enrichment built in.</p>
 
       <div class="fields-grid">
-        <div class="field-tag">Session ID</div>
         <div class="field-tag">Device Name</div>
-        <div class="field-tag">Session Type</div>
-        <div class="field-tag">Custom Props 1-8</div>
+        <div class="field-tag">Client</div>
+        <div class="field-tag">Country</div>
+        <div class="field-tag">State</div>
+        <div class="field-tag">Region</div>
+        <div class="field-tag">Device Type</div>
+        <div class="field-tag">Bepoz Version</div>
+        <div class="field-tag">System ID</div>
         <div class="field-tag">Machine Name</div>
-        <div class="field-tag">Domain</div>
         <div class="field-tag">Manufacturer</div>
         <div class="field-tag">Model</div>
         <div class="field-tag">Serial Number</div>
-        <div class="field-tag">Product Number</div>
         <div class="field-tag">Operating System</div>
-        <div class="field-tag">OS Version</div>
-        <div class="field-tag">OS Language</div>
-        <div class="field-tag">OS Install Date</div>
+        <div class="field-tag">OS End of Life</div>
         <div class="field-tag">Processor</div>
+        <div class="field-tag">Processor Age</div>
         <div class="field-tag">CPU Cores</div>
-        <div class="field-tag">Architecture</div>
-        <div class="field-tag">Total RAM</div>
-        <div class="field-tag">Available RAM</div>
-        <div class="field-tag">Private IP</div>
-        <div class="field-tag">MAC Address</div>
+        <div class="field-tag">RAM</div>
         <div class="field-tag">Logged-in User</div>
-        <div class="field-tag">User Domain</div>
-        <div class="field-tag">Admin Present</div>
         <div class="field-tag">Last Activity</div>
         <div class="field-tag">Last Boot</div>
-        <div class="field-tag">Last Updated</div>
+        <div class="field-tag">Private IP</div>
+        <div class="field-tag">MAC Address</div>
         <div class="field-tag">Timezone</div>
         <div class="field-tag">Connections</div>
-        <div class="field-tag">Description</div>
       </div>
     </div>
 
