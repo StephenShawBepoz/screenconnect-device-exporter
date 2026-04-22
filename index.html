@@ -1,285 +1,482 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ScreenConnect Device Exporter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* ===== Theme variables ===== */
     :root {
-      --bg: #f5f6f8;
-      --surface: #ffffff;
-      --surface-2: #f0f1f4;
-      --border: #dfe1e6;
-      --text: #1a1f2e;
-      --text-muted: #5f6778;
-      --accent: #00a67d;
-      --accent-hover: #00bf8f;
-      --accent-dim: rgba(0, 166, 125, 0.08);
-      --accent-text: #fff;
-      --radius: 10px;
-      --code-bg: #f0f1f4;
-      --code-text: #00a67d;
-      --illus-bar: #e8eaee;
-      --illus-bg: #f8f9fa;
-      --illus-highlight: #00a67d;
-      --illus-text: #333;
-      --illus-muted: #999;
-      --toggle-bg: var(--surface-2);
+      --bg: #0a0e17;
+      --bg-2: #0f1420;
+      --surface: #151b2b;
+      --surface-2: #1a2236;
+      --surface-3: #1f2940;
+      --border: #243049;
+      --border-subtle: #1c2538;
+      --text: #e8ecf4;
+      --text-2: #c0c8d8;
+      --text-muted: #6b7a94;
+      --accent: #00e09e;
+      --accent-2: #00c488;
+      --accent-dim: rgba(0, 224, 158, 0.08);
+      --accent-glow: rgba(0, 224, 158, 0.15);
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --orange: #f59e0b;
+      --pink: #ec4899;
+      --radius: 12px;
+      --radius-lg: 16px;
     }
 
-    [data-theme="dark"] {
-      --bg: #0f1219;
-      --surface: #1a1f2e;
-      --surface-2: #232939;
-      --border: #333a4d;
-      --text: #e1e4eb;
-      --text-muted: #8b92a5;
-      --accent: #00c896;
-      --accent-hover: #00e0a8;
-      --accent-dim: rgba(0, 200, 150, 0.10);
-      --accent-text: #0f1219;
-      --code-bg: #0f1219;
-      --code-text: #00c896;
-      --illus-bar: #2a3148;
-      --illus-bg: #161b27;
-      --illus-highlight: #00c896;
-      --illus-text: #ccc;
-      --illus-muted: #555;
-      --toggle-bg: var(--surface-2);
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --bg-2: #f1f5f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #f1f5f9;
+      --border: #e2e8f0;
+      --border-subtle: #eef2f7;
+      --text: #0f172a;
+      --text-2: #334155;
+      --text-muted: #94a3b8;
+      --accent: #059669;
+      --accent-2: #047857;
+      --accent-dim: rgba(5, 150, 105, 0.06);
+      --accent-glow: rgba(5, 150, 105, 0.1);
+      --blue: #2563eb;
+      --purple: #7c3aed;
+      --orange: #d97706;
+      --pink: #db2777;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
-      min-height: 100vh;
-      transition: background 0.2s, color 0.2s;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 40px 24px 64px;
+    /* ===== Ambient glow ===== */
+    .glow-top {
+      position: fixed; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 600px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
 
     /* ===== Theme toggle ===== */
     .theme-toggle {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, border-color 0.2s;
-      z-index: 10;
+      position: fixed; top: 20px; right: 20px; z-index: 100;
+      width: 42px; height: 42px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; backdrop-filter: blur(12px);
     }
-    .theme-toggle:hover { border-color: var(--accent); }
+    .theme-toggle:hover { border-color: var(--accent); transform: scale(1.05); }
     .theme-toggle svg { width: 18px; height: 18px; color: var(--text-muted); }
     .theme-toggle .icon-moon { display: block; }
     .theme-toggle .icon-sun { display: none; }
-    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
-    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+    [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+
+    /* ===== Layout ===== */
+    .container {
+      max-width: 800px; margin: 0 auto;
+      padding: 0 24px; position: relative; z-index: 1;
+    }
+
+    /* ===== Nav pill ===== */
+    .nav-pill {
+      display: flex; align-items: center; justify-content: center; gap: 24px;
+      padding: 14px 0; margin-bottom: 20px;
+    }
+    .nav-pill a {
+      font-size: 13px; font-weight: 500; color: var(--text-muted);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-pill a:hover { color: var(--text); }
 
     /* ===== Hero ===== */
-    .hero { text-align: center; margin-bottom: 48px; }
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
 
-    .hero-icon {
-      width: 60px; height: 60px;
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px 6px 8px;
       background: var(--accent-dim);
-      border-radius: 16px;
-      display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
+      border: 1px solid rgba(0, 224, 158, 0.15);
+      border-radius: 100px;
+      font-size: 13px; font-weight: 500; color: var(--accent);
+      margin-bottom: 28px;
     }
-    .hero-icon svg { width: 30px; height: 30px; color: var(--accent); }
-
-    .hero .version {
-      display: inline-block; font-size: 12px; color: var(--text-muted);
-      background: var(--surface-2); padding: 2px 10px; border-radius: 12px; margin-bottom: 24px;
+    .badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+      50% { opacity: 0.5; box-shadow: 0 0 16px var(--accent); }
     }
 
-    .hero h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
-    .hero .subtitle { font-size: 16px; color: var(--text-muted); max-width: 520px; margin: 0 auto 10px; }
-    .hero .compat { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
-    .hero .compat strong { color: var(--text); }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 54px);
+      font-weight: 800; letter-spacing: -0.035em;
+      line-height: 1.1; margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--text-2) 50%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    .download-btn {
+    .hero .subtitle {
+      font-size: 18px; color: var(--text-muted); max-width: 560px;
+      margin: 0 auto 36px; line-height: 1.7;
+    }
+
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .btn {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 32px; background: var(--accent); color: var(--accent-text);
-      font-size: 15px; font-weight: 600; text-decoration: none;
-      border-radius: var(--radius); transition: background 0.15s, transform 0.1s;
+      padding: 14px 28px; font-size: 15px; font-weight: 600;
+      border-radius: var(--radius); text-decoration: none;
+      transition: all 0.2s; border: none; cursor: pointer;
     }
-    .download-btn:hover { background: var(--accent-hover); }
-    .download-btn:active { transform: scale(0.98); }
-    .download-btn svg { width: 18px; height: 18px; }
+    .btn svg { width: 18px; height: 18px; }
 
-    /* ===== Sections ===== */
-    .section { margin-bottom: 44px; }
-    .section h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
-    .section .section-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; }
+    .btn-primary {
+      background: var(--accent); color: var(--bg);
+      box-shadow: 0 0 24px var(--accent-glow), 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .btn-ghost {
+      background: var(--surface); color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+
+    /* ===== Stats row ===== */
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+      background: var(--border-subtle); border-radius: var(--radius-lg);
+      overflow: hidden; margin: 60px 0;
+      border: 1px solid var(--border);
+    }
+    .stat {
+      background: var(--surface); padding: 28px 20px; text-align: center;
+    }
+    .stat-value {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ===== Before/After ===== */
+    .compare {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 64px;
+    }
+    .compare-card {
+      border-radius: var(--radius-lg); padding: 28px;
+      border: 1px solid var(--border);
+    }
+    .compare-card.old {
+      background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    }
+    .compare-card.new {
+      background: linear-gradient(135deg, var(--surface), var(--accent-dim));
+      border-color: rgba(0, 224, 158, 0.2);
+    }
+    .compare-card h3 {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 16px;
+    }
+    .compare-card.old h3 { color: var(--text-muted); }
+    .compare-card.new h3 { color: var(--accent); }
+    .compare-card ul {
+      list-style: none; display: flex; flex-direction: column; gap: 10px;
+    }
+    .compare-card li {
+      font-size: 14px; color: var(--text-2); display: flex; align-items: center; gap: 10px;
+    }
+    .compare-card li svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .compare-card.old li svg { color: var(--text-muted); }
+    .compare-card.new li svg { color: var(--accent); }
+
+    /* ===== Section headers ===== */
+    .section { margin-bottom: 64px; }
+    .section-label {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px;
+    }
+    .section h2 {
+      font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;
+    }
+    .section-desc {
+      font-size: 15px; color: var(--text-muted); margin-bottom: 28px; max-width: 540px;
+    }
+
+    /* ===== Feature grid ===== */
+    .features {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 64px;
+    }
+    .feature {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px;
+      transition: all 0.25s;
+    }
+    .feature:hover {
+      border-color: var(--accent); transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 224, 158, 0.06);
+    }
+    .feature-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .feature-icon svg { width: 20px; height: 20px; }
+    .feature-icon.green { background: rgba(0, 224, 158, 0.1); color: var(--accent); }
+    .feature-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+    .feature-icon.purple { background: rgba(168, 85, 247, 0.1); color: var(--purple); }
+    .feature-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--orange); }
+    .feature-icon.pink { background: rgba(236, 72, 153, 0.1); color: var(--pink); }
+    .feature h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .feature p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ===== Popup mockup ===== */
+    .mockup-wrapper {
+      display: flex; justify-content: center; margin: 48px 0 64px;
+    }
+    .popup-mockup {
+      width: 340px; border-radius: var(--radius-lg);
+      background: var(--surface); border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px var(--border);
+      transform: perspective(800px) rotateY(-2deg) rotateX(2deg);
+      transition: transform 0.4s;
+    }
+    .popup-mockup:hover { transform: perspective(800px) rotateY(0) rotateX(0); }
+    .mockup-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+    }
+    .mockup-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--accent-dim); display: flex;
+      align-items: center; justify-content: center;
+    }
+    .mockup-icon svg { width: 14px; height: 14px; color: var(--accent); }
+    .mockup-title { font-size: 14px; font-weight: 600; }
+    .mockup-version {
+      margin-left: auto; font-size: 11px; color: var(--text-muted);
+      background: var(--surface-3); padding: 2px 8px; border-radius: 8px;
+    }
+    .mockup-body { padding: 16px; }
+    .mockup-field {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .mockup-field-label { font-size: 12px; color: var(--text-muted); }
+    .mockup-field-value {
+      font-size: 12px; color: var(--text);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+    }
+    .mockup-btn {
+      width: 100%; padding: 11px; border: none; border-radius: 10px;
+      background: var(--accent); color: var(--bg);
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .mockup-btn svg { width: 14px; height: 14px; }
+    .mockup-log {
+      margin-top: 12px; padding: 10px 12px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px; color: var(--text-muted); line-height: 1.7;
+    }
+    .mockup-log .ok { color: var(--accent); }
+    .mockup-api {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      margin-top: 10px; font-size: 10px; color: var(--text-muted); opacity: 0.6;
+    }
+    .mockup-api svg { width: 10px; height: 10px; }
 
     /* ===== Browser tabs ===== */
     .browser-tabs {
-      display: flex; gap: 0; margin-bottom: 16px;
-      border-bottom: 2px solid var(--border);
+      display: flex; gap: 0; margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
     }
     .browser-tab {
-      padding: 10px 20px; font-size: 14px; font-weight: 600;
+      padding: 12px 20px; font-size: 14px; font-weight: 600;
       color: var(--text-muted); cursor: pointer; border: none; background: none;
-      border-bottom: 2px solid transparent; margin-bottom: -2px;
-      transition: color 0.15s, border-color 0.15s;
-      display: flex; align-items: center; gap: 8px;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all 0.15s; display: flex; align-items: center; gap: 8px;
     }
     .browser-tab:hover { color: var(--text); }
     .browser-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .browser-tab svg { width: 18px; height: 18px; }
-    .browser-tab img { width: 18px; height: 18px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     /* ===== Steps ===== */
-    .steps { display: flex; flex-direction: column; gap: 16px; }
-
+    .steps { display: flex; flex-direction: column; gap: 12px; }
     .step {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 20px; overflow: hidden;
+      transition: border-color 0.2s;
     }
-
+    .step:hover { border-color: var(--accent); }
     .step-header { display: flex; gap: 14px; align-items: flex-start; }
-
     .step-number {
-      width: 30px; height: 30px; background: var(--accent-dim); color: var(--accent);
+      width: 28px; height: 28px; background: var(--accent-dim); color: var(--accent);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; flex-shrink: 0;
+      font-size: 13px; font-weight: 700; flex-shrink: 0;
     }
-
-    .step-content h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-    .step-content p { font-size: 13.5px; color: var(--text-muted); line-height: 1.7; }
-
+    .step-content h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .step-content p { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
     .step-content code {
-      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 12.5px;
-      background: var(--code-bg); padding: 2px 8px; border-radius: 4px; color: var(--code-text);
-      user-select: all; cursor: pointer;
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+      background: var(--accent-dim); padding: 3px 10px; border-radius: 6px;
+      color: var(--accent); user-select: all; cursor: pointer;
+      border: 1px solid rgba(0,224,158,0.1);
     }
-
     .step-content .action-text {
       display: inline-block; background: var(--accent-dim); color: var(--accent);
       font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
     }
 
-    /* ===== Illustrations (CSS browser mockups) ===== */
+    /* ===== Illustrations ===== */
     .illustration {
-      margin-top: 16px; border-radius: 8px; overflow: hidden;
-      border: 1px solid var(--border); background: var(--illus-bg);
+      margin-top: 14px; border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border); background: var(--surface-2);
     }
-
     .illus-toolbar {
       display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px; background: var(--illus-bar); border-bottom: 1px solid var(--border);
+      padding: 8px 12px; background: var(--surface-3); border-bottom: 1px solid var(--border);
     }
-
     .illus-dots { display: flex; gap: 5px; }
     .illus-dots span { width: 10px; height: 10px; border-radius: 50%; }
     .illus-dots .d-red { background: #ff5f57; }
     .illus-dots .d-yel { background: #febc2e; }
     .illus-dots .d-grn { background: #28c840; }
-
     .illus-url {
-      flex: 1; background: var(--illus-bg); border: 1px solid var(--border);
-      border-radius: 5px; padding: 4px 10px; font-size: 11px; color: var(--illus-muted);
-      font-family: 'SF Mono', monospace; overflow: hidden; white-space: nowrap;
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--text-muted);
+      font-family: 'SF Mono', monospace;
     }
-
-    .illus-url .highlight { color: var(--illus-highlight); font-weight: 600; }
-
-    .illus-body { padding: 16px; }
-
-    .illus-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;
-      font-size: 12px; color: var(--illus-text);
-    }
-
+    .illus-url .hl { color: var(--accent); font-weight: 600; }
+    .illus-body { padding: 14px 16px; }
     .illus-toggle {
       width: 36px; height: 20px; border-radius: 10px; position: relative;
-      transition: background 0.2s;
     }
-    .illus-toggle.off { background: var(--border); }
-    .illus-toggle.on { background: var(--illus-highlight); }
+    .illus-toggle.on { background: var(--accent); }
     .illus-toggle::after {
-      content: ''; position: absolute; top: 2px; width: 16px; height: 16px;
-      border-radius: 50%; background: white; transition: left 0.2s;
+      content: ''; position: absolute; top: 2px; left: 18px;
+      width: 16px; height: 16px; border-radius: 50%; background: white;
     }
-    .illus-toggle.off::after { left: 2px; }
-    .illus-toggle.on::after { left: 18px; }
-
     .illus-btn {
-      display: inline-block; padding: 6px 14px; border-radius: 5px;
+      display: inline-block; padding: 6px 14px; border-radius: 6px;
       font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); color: var(--text-2); background: var(--surface);
     }
-    .illus-btn-primary { background: var(--illus-highlight); color: #fff; }
-    .illus-btn-outline { border: 1px solid var(--border); color: var(--illus-text); background: var(--surface); }
-
-    .illus-label { font-size: 11px; color: var(--illus-muted); }
+    .illus-label { font-size: 11px; color: var(--text-muted); }
     .illus-arrow {
-      display: inline-block; color: var(--accent); font-size: 16px; font-weight: 700;
+      display: inline-block; color: var(--accent); font-size: 15px; font-weight: 700;
       animation: bounce 1s infinite;
     }
-
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
     }
-
     .illus-highlight-box {
-      border: 2px dashed var(--accent); border-radius: 6px; padding: 8px 12px;
+      border: 2px dashed var(--accent); border-radius: 8px; padding: 8px 12px;
       background: var(--accent-dim);
     }
 
-    /* ===== Fields grid ===== */
-    .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-
-    .field-tag {
-      font-size: 12.5px; color: var(--text-muted);
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 6px; padding: 7px 12px;
+    /* ===== Fields ===== */
+    .fields-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     }
+    .field-tag {
+      font-size: 12px; font-weight: 500; color: var(--text-2);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      transition: all 0.2s;
+    }
+    .field-tag:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ===== Note ===== */
+    /* ===== Notes ===== */
+    .notes { display: flex; flex-direction: column; gap: 12px; }
     .note {
       background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--accent); border-radius: var(--radius);
-      padding: 14px 16px; font-size: 13px; color: var(--text-muted);
+      border-radius: var(--radius); padding: 16px 20px;
+      font-size: 13px; color: var(--text-muted);
+      display: flex; gap: 12px; align-items: flex-start;
     }
+    .note-icon {
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .note-icon svg { width: 16px; height: 16px; }
+    .note-icon.green { background: rgba(0, 224, 158, 0.1); color: var(--accent); }
+    .note-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+    .note-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--orange); }
     .note strong { color: var(--text); }
 
     /* ===== Footer ===== */
     .footer {
-      margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border);
+      margin-top: 40px; padding: 24px 0 40px;
+      border-top: 1px solid var(--border);
       text-align: center; font-size: 12px; color: var(--text-muted);
     }
-    .footer a { color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
-    .footer a:hover { color: var(--text); }
+    .footer a { color: var(--text-muted); text-decoration: none; }
+    .footer a:hover { color: var(--accent); }
 
-    @media (max-width: 500px) {
-      .hero h1 { font-size: 22px; }
-      .fields-grid { grid-template-columns: 1fr; }
-      .browser-tab { padding: 8px 14px; font-size: 13px; }
+    /* ===== Reveal animation ===== */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 640px) {
+      .hero { padding: 60px 0 40px; }
+      .hero h1 { font-size: 32px; }
+      .stats { grid-template-columns: 1fr; }
+      .compare { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .fields-grid { grid-template-columns: 1fr 1fr; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .popup-mockup { transform: none; }
     }
   </style>
 </head>
 <body>
-  <!-- Theme toggle -->
-  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+  <div class="glow-top"></div>
+
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
@@ -293,33 +490,206 @@
 
   <div class="container">
 
+    <!-- Nav -->
+    <nav class="nav-pill">
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="#fields">Data Fields</a>
+      <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v3.0.0%0A">Support</a>
+    </nav>
+
     <!-- Hero -->
     <div class="hero">
-      <div class="hero-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>
-        </svg>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        v3.0 &mdash; Now powered by the Report API
       </div>
-      <span class="version">v3.0.0</span>
-      <h1>ScreenConnect Device Exporter</h1>
-      <p class="subtitle">Export device details from any ScreenConnect instance to a spreadsheet in one click. Powered by the Report API &mdash; fetches all devices instantly instead of clicking through them one by one.</p>
-      <p class="compat">Works with <strong>Google Chrome</strong> and <strong>Microsoft Edge</strong> (any Chromium browser).</p>
-      <a class="download-btn" href="screenconnect-device-exporter.zip" download>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Download Extension (.zip)
-      </a>
+      <h1>Device inventory<br>from ScreenConnect,<br>in seconds.</h1>
+      <p class="subtitle">One click exports every device with 35+ fields &mdash; hardware specs, serial numbers, network info, and more. No more clicking through devices one by one.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="screenconnect-device-exporter.zip" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download for Chrome / Edge
+        </a>
+        <a class="btn btn-ghost" href="#install">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+          </svg>
+          Install Guide
+        </a>
+      </div>
+    </div>
+
+    <!-- Popup mockup -->
+    <div class="mockup-wrapper reveal">
+      <div class="popup-mockup">
+        <div class="mockup-header">
+          <div class="mockup-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <span class="mockup-title">Device Exporter</span>
+          <span class="mockup-version">v3.0.0</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-field">
+            <span class="mockup-field-label">Export format</span>
+            <span class="mockup-field-value">CSV</span>
+          </div>
+          <div class="mockup-field">
+            <span class="mockup-field-label">Session type</span>
+            <span class="mockup-field-value">Access</span>
+          </div>
+          <div class="mockup-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
+          </div>
+          <div class="mockup-log">
+            <span class="ok">[10:32:01] Exported 247 device(s) as CSV.</span><br>
+            [10:32:00] Fetching Access devices via Report API...
+          </div>
+          <div class="mockup-api">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Powered by Report API
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="stat-value">35+</div>
+        <div class="stat-label">Data fields exported</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">1 req</div>
+        <div class="stat-label">Single API call</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">~2s</div>
+        <div class="stat-label">Export time</div>
+      </div>
+    </div>
+
+    <!-- Before/After -->
+    <div class="compare reveal">
+      <div class="compare-card old">
+        <h3>v2 &mdash; DOM Scraping</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Clicks each device one by one
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Minutes for large groups
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Breaks when UI changes
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            22 fields, scroll required
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Only *.screenconnect.com
+          </li>
+        </ul>
+      </div>
+      <div class="compare-card new">
+        <h3>v3 &mdash; Report API</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            All devices in one request
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Seconds, not minutes
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Stable structured API
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            35+ fields, no scrolling
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Any instance, any domain
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div id="features" class="section reveal">
+      <div class="section-label">Features</div>
+      <h2>Everything you need</h2>
+      <p class="section-desc">Built for IT teams who manage device fleets through ScreenConnect.</p>
+    </div>
+
+    <div class="features reveal">
+      <div class="feature">
+        <div class="feature-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3>Instant Export</h3>
+        <p>Single API call fetches all devices. No delays, no scrolling.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>35+ Data Fields</h3>
+        <p>Hardware specs, serial numbers, network, OS, user info, and more.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>No Credentials</h3>
+        <p>Uses your existing browser login. No API keys to configure.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3>Any Instance</h3>
+        <p>Works on screenconnect.com, self-hosted, and custom domains.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon pink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3>CSV or JSON</h3>
+        <p>Export to spreadsheet-ready CSV or structured JSON.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Session Filtering</h3>
+        <p>Filter by Access, Support, or Meeting sessions.</p>
+      </div>
     </div>
 
     <!-- Installation -->
-    <div class="section">
+    <div id="install" class="section reveal">
+      <div class="section-label">Setup</div>
       <h2>Installation</h2>
-      <p class="section-desc">Pick your browser below and follow the steps. It takes about 2 minutes.</p>
+      <p class="section-desc">Pick your browser and follow the steps. Takes about 2 minutes.</p>
 
       <div class="browser-tabs">
         <button class="browser-tab active" onclick="switchTab('chrome')">
@@ -332,7 +702,7 @@
         </button>
       </div>
 
-      <!-- Chrome instructions -->
+      <!-- Chrome -->
       <div class="tab-content active" id="tab-chrome">
         <div class="steps">
           <div class="step">
@@ -340,102 +710,81 @@
               <div class="step-number">1</div>
               <div class="step-content">
                 <h3>Download and unzip</h3>
-                <p>Click the green <strong>Download</strong> button above. Find the downloaded file (usually in your <strong>Downloads</strong> folder), right-click it, and choose <strong>Extract All</strong> (Windows) or double-click it (Mac) to unzip.</p>
+                <p>Click the <strong>Download</strong> button above. Unzip the file &mdash; right-click > <strong>Extract All</strong> (Windows) or double-click (Mac).</p>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">2</div>
               <div class="step-content">
                 <h3>Open the Extensions page</h3>
-                <p>Open Google Chrome. Type this into the address bar and press Enter:</p>
+                <p>In Chrome, type this into the address bar and press Enter:</p>
                 <p style="margin-top:8px"><code>chrome://extensions</code></p>
               </div>
             </div>
             <div class="illustration">
               <div class="illus-toolbar">
                 <div class="illus-dots"><span class="d-red"></span><span class="d-yel"></span><span class="d-grn"></span></div>
-                <div class="illus-url"><span class="highlight">chrome://extensions</span></div>
+                <div class="illus-url"><span class="hl">chrome://extensions</span></div>
               </div>
-              <div class="illus-body" style="padding: 12px 16px;">
-                <div style="font-size:16px; font-weight:700; color:var(--illus-text); margin-bottom:4px;">Extensions</div>
+              <div class="illus-body">
+                <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:2px;">Extensions</div>
                 <div class="illus-label">Manage your Chrome extensions</div>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">3</div>
               <div class="step-content">
-                <h3>Turn on Developer mode</h3>
-                <p>Look in the <strong>top-right corner</strong> of the page. You'll see a toggle labelled <strong>Developer mode</strong>. Click it to turn it on (it should turn blue).</p>
+                <h3>Enable Developer mode</h3>
+                <p>Toggle <strong>Developer mode</strong> on in the top-right corner.</p>
               </div>
             </div>
             <div class="illustration">
-              <div class="illus-body" style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px;">
-                <div style="font-size:14px; font-weight:600; color:var(--illus-text);">Extensions</div>
+              <div class="illus-body" style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="font-size:13px; font-weight:600; color:var(--text);">Extensions</div>
                 <div style="display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:12px; color:var(--illus-text); font-weight:500;">Developer mode</span>
+                  <span style="font-size:12px; color:var(--text-2); font-weight:500;">Developer mode</span>
                   <div class="illus-toggle on"></div>
                   <span class="illus-arrow">&larr;</span>
                 </div>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">4</div>
               <div class="step-content">
-                <h3>Click "Load unpacked"</h3>
-                <p>Three new buttons will appear at the top-left. Click <span class="action-text">Load unpacked</span>. A file browser will open &mdash; navigate to the folder you unzipped in Step 1 and select it.</p>
+                <h3>Load the extension</h3>
+                <p>Click <span class="action-text">Load unpacked</span>, then select the unzipped folder.</p>
               </div>
             </div>
             <div class="illustration">
-              <div class="illus-body" style="display:flex; gap:10px; padding:14px 16px;">
+              <div class="illus-body" style="display:flex; gap:10px;">
                 <div class="illus-highlight-box" style="display:flex;align-items:center;gap:6px;">
-                  <span class="illus-btn illus-btn-outline">Load unpacked</span>
+                  <span class="illus-btn">Load unpacked</span>
                   <span class="illus-arrow">&larr;</span>
                 </div>
-                <span class="illus-btn illus-btn-outline">Pack extension</span>
-                <span class="illus-btn illus-btn-outline">Update</span>
+                <span class="illus-btn">Pack extension</span>
+                <span class="illus-btn">Update</span>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">5</div>
               <div class="step-content">
-                <h3>Pin the extension (recommended)</h3>
-                <p>Click the <strong>puzzle piece icon</strong> in Chrome's toolbar (top-right, next to the address bar). Find <strong>ScreenConnect Device Exporter</strong> in the list and click the <strong>pin icon</strong> so it's always visible.</p>
-              </div>
-            </div>
-            <div class="illustration">
-              <div class="illus-body" style="padding:12px 16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:20px;height:20px;background:var(--accent-dim);border-radius:4px;display:flex;align-items:center;justify-content:center;">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
-                    </div>
-                    <span style="font-size:12px;font-weight:500;color:var(--illus-text);">ScreenConnect Device Exporter</span>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
-                    <span class="illus-arrow">&larr;</span>
-                  </div>
-                </div>
-                <div class="illus-label" style="margin-top:8px;">Click the pin to keep it visible in your toolbar</div>
+                <h3>Pin the extension</h3>
+                <p>Click the <strong>puzzle piece icon</strong> in the toolbar, then <strong>pin</strong> ScreenConnect Device Exporter.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Edge instructions -->
+      <!-- Edge -->
       <div class="tab-content" id="tab-edge">
         <div class="steps">
           <div class="step">
@@ -443,44 +792,42 @@
               <div class="step-number">1</div>
               <div class="step-content">
                 <h3>Download and unzip</h3>
-                <p>Click the green <strong>Download</strong> button above. Find the downloaded file (usually in your <strong>Downloads</strong> folder), right-click it, and choose <strong>Extract All</strong> to unzip.</p>
+                <p>Click the <strong>Download</strong> button above. Right-click > <strong>Extract All</strong> to unzip.</p>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">2</div>
               <div class="step-content">
                 <h3>Open the Extensions page</h3>
-                <p>Open Microsoft Edge. Type this into the address bar and press Enter:</p>
+                <p>In Edge, type this into the address bar:</p>
                 <p style="margin-top:8px"><code>edge://extensions</code></p>
               </div>
             </div>
             <div class="illustration">
               <div class="illus-toolbar">
                 <div class="illus-dots"><span class="d-red"></span><span class="d-yel"></span><span class="d-grn"></span></div>
-                <div class="illus-url"><span class="highlight">edge://extensions</span></div>
+                <div class="illus-url"><span class="hl">edge://extensions</span></div>
               </div>
-              <div class="illus-body" style="padding: 12px 16px;">
-                <div style="font-size:16px; font-weight:700; color:var(--illus-text); margin-bottom:4px;">Extensions</div>
+              <div class="illus-body">
+                <div style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:2px;">Extensions</div>
                 <div class="illus-label">Manage your Edge extensions</div>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">3</div>
               <div class="step-content">
-                <h3>Turn on Developer mode</h3>
-                <p>Look in the <strong>bottom-left</strong> of the Extensions page. You'll see a toggle labelled <strong>Developer mode</strong>. Click it to turn it on.</p>
+                <h3>Enable Developer mode</h3>
+                <p>Toggle <strong>Developer mode</strong> on at the bottom-left.</p>
               </div>
             </div>
             <div class="illustration">
-              <div class="illus-body" style="padding:14px 16px;">
+              <div class="illus-body">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <span style="font-size:12px; color:var(--illus-text); font-weight:500;">Developer mode</span>
+                  <span style="font-size:12px; color:var(--text-2); font-weight:500;">Developer mode</span>
                   <div class="illus-toggle on"></div>
                   <span class="illus-arrow">&larr;</span>
                 </div>
@@ -488,32 +835,30 @@
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">4</div>
               <div class="step-content">
-                <h3>Click "Load unpacked"</h3>
-                <p>A blue <span class="action-text">Load unpacked</span> button will appear at the top. Click it, then navigate to the folder you unzipped in Step 1 and select it.</p>
+                <h3>Load the extension</h3>
+                <p>Click <span class="action-text">Load unpacked</span>, then select the unzipped folder.</p>
               </div>
             </div>
             <div class="illustration">
-              <div class="illus-body" style="display:flex; gap:10px; padding:14px 16px;">
+              <div class="illus-body" style="display:flex; gap:10px;">
                 <div class="illus-highlight-box" style="display:flex;align-items:center;gap:6px;">
-                  <span class="illus-btn illus-btn-outline">Load unpacked</span>
+                  <span class="illus-btn">Load unpacked</span>
                   <span class="illus-arrow">&larr;</span>
                 </div>
-                <span class="illus-btn illus-btn-outline">Pack extension</span>
+                <span class="illus-btn">Pack extension</span>
               </div>
             </div>
           </div>
-
           <div class="step">
             <div class="step-header">
               <div class="step-number">5</div>
               <div class="step-content">
-                <h3>Pin the extension (recommended)</h3>
-                <p>Click the <strong>puzzle piece icon</strong> in Edge's toolbar. Find <strong>ScreenConnect Device Exporter</strong> and click the <strong>eye icon</strong> to make it always visible in your toolbar.</p>
+                <h3>Pin the extension</h3>
+                <p>Click the <strong>puzzle piece icon</strong> in Edge's toolbar, then click the <strong>eye icon</strong> to keep it visible.</p>
               </div>
             </div>
           </div>
@@ -521,51 +866,17 @@
       </div>
     </div>
 
-    <!-- How to use -->
-    <div class="section">
-      <h2>How to Use</h2>
-      <p class="section-desc">Once installed, exporting takes seconds &mdash; no scrolling or waiting required.</p>
-      <div class="steps">
-        <div class="step">
-          <div class="step-header">
-            <div class="step-number">1</div>
-            <div class="step-content">
-              <h3>Open ScreenConnect</h3>
-              <p>Go to any page in your ScreenConnect instance and make sure you're logged in.</p>
-            </div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-number">2</div>
-            <div class="step-content">
-              <h3>Click the extension and hit Export</h3>
-              <p>Click the <strong>Device Exporter</strong> icon in your toolbar. Choose <strong>CSV</strong> or <strong>JSON</strong>, pick a session type (defaults to <strong>Access</strong>), then click <span class="action-text">Export CSV</span>.</p>
-              <p style="margin-top:6px;">The extension fetches all devices via the Report API in one request &mdash; no clicking through devices one by one.</p>
-            </div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-number">3</div>
-            <div class="step-content">
-              <h3>Open the downloaded file</h3>
-              <p>A file will download automatically within seconds. Open it in <strong>Excel</strong>, <strong>Google Sheets</strong>, or <strong>Numbers</strong> to see all your device data.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Data fields -->
+    <div id="fields" class="section reveal">
+      <div class="section-label">Data</div>
+      <h2>What gets exported</h2>
+      <p class="section-desc">Every row includes these fields when available. That's 35+ columns of device intelligence.</p>
 
-    <!-- Exported Fields -->
-    <div class="section">
-      <h2>What Data Gets Exported</h2>
-      <p class="section-desc">Every row includes these fields (when available). v3.0 exports significantly more data than v2.</p>
       <div class="fields-grid">
         <div class="field-tag">Session ID</div>
         <div class="field-tag">Device Name</div>
         <div class="field-tag">Session Type</div>
-        <div class="field-tag">Custom Properties 1-8</div>
+        <div class="field-tag">Custom Props 1-8</div>
         <div class="field-tag">Machine Name</div>
         <div class="field-tag">Domain</div>
         <div class="field-tag">Manufacturer</div>
@@ -576,73 +887,80 @@
         <div class="field-tag">OS Version</div>
         <div class="field-tag">OS Language</div>
         <div class="field-tag">OS Install Date</div>
-        <div class="field-tag">Processor (CPU)</div>
-        <div class="field-tag">CPU Core Count</div>
-        <div class="field-tag">CPU Architecture</div>
-        <div class="field-tag">Total RAM (MB)</div>
-        <div class="field-tag">Available RAM (MB)</div>
-        <div class="field-tag">Private IP Address</div>
+        <div class="field-tag">Processor</div>
+        <div class="field-tag">CPU Cores</div>
+        <div class="field-tag">Architecture</div>
+        <div class="field-tag">Total RAM</div>
+        <div class="field-tag">Available RAM</div>
+        <div class="field-tag">Private IP</div>
         <div class="field-tag">MAC Address</div>
         <div class="field-tag">Logged-in User</div>
         <div class="field-tag">User Domain</div>
-        <div class="field-tag">Local Admin Present</div>
-        <div class="field-tag">Last Activity Time</div>
-        <div class="field-tag">Last Boot Time</div>
-        <div class="field-tag">Info Update Time</div>
+        <div class="field-tag">Admin Present</div>
+        <div class="field-tag">Last Activity</div>
+        <div class="field-tag">Last Boot</div>
+        <div class="field-tag">Last Updated</div>
         <div class="field-tag">Timezone</div>
-        <div class="field-tag">Connection Count</div>
+        <div class="field-tag">Connections</div>
+        <div class="field-tag">Description</div>
       </div>
     </div>
 
-    <!-- Tips -->
-    <div class="section">
-      <div class="note">
-        <strong>Requires Report Manager.</strong> This extension uses the built-in ScreenConnect Report API. If you get a "Report API not found" error, the Report Manager extension may need to be enabled in your ScreenConnect Admin &gt; Extensions.
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="note">
-        <strong>Some fields are blank?</strong> This is normal. Devices that are offline or have an older ScreenConnect agent may not report all hardware details (like RAM or Processor). The extension exports whatever ScreenConnect has stored.
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="note">
-        <strong>Works on any instance.</strong> This extension is not limited to screenconnect.com &mdash; it works on self-hosted and custom-domain ScreenConnect instances too. Just open your instance, log in, and click Export.
+    <!-- Notes -->
+    <div class="section reveal">
+      <div class="notes">
+        <div class="note">
+          <div class="note-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div><strong>Requires Report Manager.</strong> This extension uses the built-in Report API. If you see "Report API not found", ask your admin to enable the Report Manager extension in ScreenConnect.</div>
+        </div>
+        <div class="note">
+          <div class="note-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          </div>
+          <div><strong>Some fields blank?</strong> Devices that are offline or running older agents may not report all hardware details. The extension exports whatever ScreenConnect has stored.</div>
+        </div>
+        <div class="note">
+          <div class="note-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div><strong>Any ScreenConnect instance.</strong> Not limited to screenconnect.com &mdash; works on self-hosted and custom-domain instances. Just log in and click Export.</div>
+        </div>
       </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-      <p>Built by <a href="mailto:stephen.shaw@bepoz.com.au">stephen.shaw@bepoz.com.au</a> &middot; <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v3.0.0%0ABrowser%3A%0ADescribe%20the%20issue%3A%0A">Report an issue</a></p>
+      <p>Built by <a href="mailto:stephen.shaw@bepoz.com.au">stephen.shaw@bepoz.com.au</a> &nbsp;&middot;&nbsp; <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v3.0.0%0ABrowser%3A%0A">Report an issue</a></p>
     </div>
-
   </div>
 
   <script>
-    // Theme toggle
+    // Theme
     function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next === 'dark' ? 'dark' : '');
-      if (next === 'dark') html.setAttribute('data-theme', 'dark');
-      else html.removeAttribute('data-theme');
-      localStorage.setItem('theme', next);
+      const el = document.documentElement;
+      const isDark = el.getAttribute('data-theme') === 'dark';
+      el.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
     }
-
-    // Restore saved theme
     const saved = localStorage.getItem('theme');
-    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
 
-    // Browser tab switcher
+    // Tab switcher
     function switchTab(browser) {
       document.querySelectorAll('.browser-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.getElementById('tab-' + browser).classList.add('active');
       event.currentTarget.classList.add('active');
     }
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
   </script>
 </body>
 </html>
