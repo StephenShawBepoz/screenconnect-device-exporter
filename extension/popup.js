@@ -23,11 +23,8 @@ function download(text, filename, mime) {
   const blob = new Blob([text], { type: mime });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -46,14 +43,13 @@ const FIELDS = [
   'GuestMachineName', 'GuestMachineDomain', 'GuestMachineDescription',
   'GuestMachineManufacturerName', 'GuestMachineModel',
   'GuestMachineProductNumber', 'GuestMachineSerialNumber',
-  'GuestOperatingSystemName', 'GuestOperatingSystemVersion',
-  'GuestOperatingSystemManufacturerName', 'GuestOperatingSystemLanguage',
-  'GuestProcessorName', 'GuestProcessorVirtualCount', 'GuestProcessorArchitecture',
+  'GuestOperatingSystemName',
+  'GuestProcessorName', 'GuestProcessorVirtualCount',
   'GuestSystemMemoryTotalMegabytes',
   'GuestPrivateNetworkAddress', 'GuestHardwareNetworkAddress',
-  'GuestLoggedOnUserName', 'GuestLoggedOnUserDomain', 'GuestIsLocalAdminPresent',
+  'GuestLoggedOnUserName', 'GuestLoggedOnUserDomain',
   'GuestLastActivityTime', 'GuestLastBootTime', 'GuestInfoUpdateTime',
-  'GuestTimeZoneName', 'GuestTimeZoneOffsetHours',
+  'GuestTimeZoneName',
   'ConnectionCount',
 ];
 
@@ -63,12 +59,9 @@ function parseCSV(text) {
   const rows = [];
   let i = 0;
   const len = text.length;
-  // Detect delimiter from first line
   const firstNL = text.indexOf('\n');
   const sample = firstNL > 0 ? text.substring(0, firstNL) : text;
-  const tabs = (sample.match(/\t/g) || []).length;
-  const commas = (sample.match(/,/g) || []).length;
-  const delim = tabs > commas ? '\t' : ',';
+  const delim = (sample.match(/\t/g) || []).length > (sample.match(/,/g) || []).length ? '\t' : ',';
 
   while (i < len) {
     const row = [];
@@ -109,19 +102,15 @@ function serializeCSV(headers, rows) {
   return lines.join('\n');
 }
 
-/* ---------- Transformation: State split ---------- */
+/* ---------- Transformations ---------- */
 
 function splitState(val) {
   if (!val || !val.trim()) return { country: '', state: '' };
   const s = val.trim();
-  // "AU - NSW", "AU  - VIC", "NSW" (no dash)
   const m = s.match(/^([A-Z]{2})\s*-\s*(.+)$/i);
   if (m) return { country: m[1].trim(), state: m[2].trim() };
-  // Bare state like "NSW"
   return { country: '', state: s };
 }
-
-/* ---------- Transformation: OS End of Life ---------- */
 
 function getOSEndOfLife(osName) {
   if (!osName) return '';
@@ -142,13 +131,20 @@ function getOSEndOfLife(osName) {
   return '';
 }
 
-/* ---------- Transformation: Processor age ---------- */
-
 function getProcessorAge(procName) {
   if (!procName) return '';
   const now = new Date().getFullYear();
+  const fmt = (label, year) => { const age = now - year; return `${label} (~${year}, ${age}yr${age !== 1 ? 's' : ''} old)`; };
+  const genYears = { 1:2008, 2:2011, 3:2012, 4:2013, 5:2015, 6:2015, 7:2017, 8:2017, 9:2018, 10:2020, 11:2021, 12:2021, 13:2022, 14:2023, 15:2025 };
 
-  // Intel Core iX-NNNNN (e.g. i7-4770, i7-10700, i5-12400)
+  // 1. Try explicit "Nth Gen" text (e.g. "12th Gen Intel(R) Core(TM) i7-1260P")
+  const genText = procName.match(/(\d{1,2})(?:st|nd|rd|th)\s+Gen/i);
+  if (genText) {
+    const gen = parseInt(genText[1]);
+    if (genYears[gen]) return fmt(`Gen ${gen}`, genYears[gen]);
+  }
+
+  // 2. Intel Core iX-NNNNN from model number
   const coreMatch = procName.match(/i[3579]-(\d{3,5})/i);
   if (coreMatch) {
     const model = coreMatch[1];
@@ -156,42 +152,43 @@ function getProcessorAge(procName) {
     if (model.length <= 3) gen = 1;
     else if (model.length === 4) gen = parseInt(model[0]);
     else gen = parseInt(model.substring(0, model.length - 3));
-    const years = { 1:2008, 2:2011, 3:2012, 4:2013, 5:2015, 6:2015, 7:2017, 8:2017, 9:2018, 10:2020, 11:2021, 12:2021, 13:2022, 14:2023, 15:2025 };
-    const y = years[gen];
-    if (y) { const age = now - y; return `Gen ${gen} (~${y}, ${age}yr${age !== 1 ? 's' : ''} old)`; }
+    if (genYears[gen]) return fmt(`Gen ${gen}`, genYears[gen]);
   }
 
-  // Intel Celeron J/N series (e.g. J1900, N4000, N5095)
-  const celMatch = procName.match(/celeron.*?([JN])(\d)(\d{2,3})/i);
+  // 3. Intel Xeon E-2xxx (e.g. E-2224G, E-2314)
+  const xeonMatch = procName.match(/xeon.*?e-(\d)(\d)/i);
+  if (xeonMatch) {
+    const sub = parseInt(xeonMatch[2]);
+    const xeonYears = { 1: 2018, 2: 2019, 3: 2021, 4: 2023 };
+    if (xeonYears[sub]) return fmt(`Xeon E-${xeonMatch[1]}${sub}xx`, xeonYears[sub]);
+  }
+
+  // 4. Intel Celeron J/N series (e.g. J1900, N4000, N5095)
+  const celMatch = procName.match(/celeron.*?([JN])(\d)/i);
   if (celMatch) {
-    const series = celMatch[1].toUpperCase() + celMatch[2];
+    const key = celMatch[1].toUpperCase() + celMatch[2];
     const celYears = { J1:2013, J3:2016, J4:2017, N2:2013, N3:2014, N4:2017, N5:2021, N6:2021 };
-    const y = celYears[series];
-    if (y) { const age = now - y; return `${series}xxx (~${y}, ${age}yr${age !== 1 ? 's' : ''} old)`; }
+    if (celYears[key]) return fmt(`Celeron ${key}xxx`, celYears[key]);
   }
 
-  // Intel Celeron G series (e.g. G1820, G4900, G5900)
-  const celGMatch = procName.match(/celeron.*?G(\d)\d{3}/i);
-  if (celGMatch) {
-    const s = parseInt(celGMatch[1]);
-    const gYears = { 1:2013, 3:2015, 4:2018, 5:2020, 6:2021 };
-    const y = gYears[s];
-    if (y) { const age = now - y; return `G${s}xxx (~${y}, ${age}yr${age !== 1 ? 's' : ''} old)`; }
+  // 5. Intel Celeron/Pentium G series (e.g. G4900, G5400, G7400)
+  const gMatch = procName.match(/(?:celeron|pentium).*?G(\d)\d{3}/i);
+  if (gMatch) {
+    const s = parseInt(gMatch[1]);
+    const gYears = { 1:2013, 3:2015, 4:2018, 5:2020, 6:2021, 7:2022 };
+    if (gYears[s]) return fmt(`G${s}xxx`, gYears[s]);
   }
 
-  // AMD Ryzen (e.g. Ryzen 5 3600, Ryzen 7 7700)
+  // 6. AMD Ryzen (e.g. Ryzen 5 3600, Ryzen 7 7700X)
   const ryzenMatch = procName.match(/ryzen\s+\d\s+(\d)\d{3}/i);
   if (ryzenMatch) {
     const s = parseInt(ryzenMatch[1]);
     const rYears = { 1:2017, 2:2018, 3:2019, 4:2020, 5:2020, 7:2022, 8:2024, 9:2024 };
-    const y = rYears[s];
-    if (y) { const age = now - y; return `Ryzen ${s}xxx (~${y}, ${age}yr${age !== 1 ? 's' : ''} old)`; }
+    if (rYears[s]) return fmt(`Ryzen ${s}xxx`, rYears[s]);
   }
 
   return '';
 }
-
-/* ---------- Transformation: RAM to GB ---------- */
 
 function mbToGB(val) {
   const mb = parseInt(val);
@@ -199,25 +196,39 @@ function mbToGB(val) {
   return `${Math.round(mb / 1024)} GB`;
 }
 
-/* ---------- Process CSV into transformed rows ---------- */
+/* ---------- Output columns: clean names in BDM-friendly order ---------- */
 
 const OUTPUT_COLUMNS = [
-  'SessionID', 'Name', 'SessionType',
-  'CustomProperty1', 'Country', 'State',
-  'CustomProperty3', 'CustomProperty4', 'CustomProperty5',
-  'Bepoz Version', 'CustomProperty7', 'SystemID',
-  'GuestMachineName', 'GuestMachineDomain', 'GuestMachineDescription',
-  'GuestMachineManufacturerName', 'GuestMachineModel',
-  'GuestMachineProductNumber', 'GuestMachineSerialNumber',
-  'GuestOperatingSystemName', 'OS End of Life', 'GuestOperatingSystemVersion',
-  'GuestOperatingSystemManufacturerName', 'GuestOperatingSystemLanguage',
-  'GuestProcessorName', 'Processor Age', 'GuestProcessorVirtualCount', 'GuestProcessorArchitecture',
-  'RAM (GB)',
-  'GuestLoggedOnUserName', 'GuestLoggedOnUserDomain', 'GuestIsLocalAdminPresent',
-  'GuestLastActivityTime', 'GuestLastBootTime', 'GuestInfoUpdateTime',
-  'GuestPrivateNetworkAddress', 'GuestHardwareNetworkAddress',
-  'GuestTimeZoneName', 'GuestTimeZoneOffsetHours',
-  'ConnectionCount',
+  'Device Name',
+  'Client',
+  'Country',
+  'State',
+  'Region',
+  'Device Type',
+  'Bepoz Version',
+  'System ID',
+  'Machine Name',
+  'Domain',
+  'Manufacturer',
+  'Model',
+  'Serial Number',
+  'Product Number',
+  'Operating System',
+  'OS End of Life',
+  'Processor',
+  'Processor Age',
+  'CPU Cores',
+  'RAM',
+  'Logged-in User',
+  'User Domain',
+  'Last Activity',
+  'Last Boot',
+  'Last Updated',
+  'Private IP',
+  'MAC Address',
+  'Timezone',
+  'Connections',
+  'Session ID',
 ];
 
 function processData(csvText) {
@@ -233,27 +244,39 @@ function processData(csvText) {
     const get = (name) => { const idx = col(name); return idx >= 0 ? (raw[idx] || '') : ''; };
 
     const { country, state } = splitState(get('CustomProperty2'));
-    const osName = get('GuestOperatingSystemName');
-    const proc = get('GuestProcessorName');
-    const ramMB = get('GuestSystemMemoryTotalMegabytes');
 
-    const row = {};
-    // Pass-through fields
-    for (const f of FIELDS) {
-      if (f === 'CustomProperty2' || f === 'CustomProperty6' || f === 'CustomProperty8' ||
-          f === 'GuestSystemMemoryTotalMegabytes') continue;
-      row[f] = get(f);
-    }
-    // Transformed fields
-    row['Country'] = country;
-    row['State'] = state;
-    row['Bepoz Version'] = get('CustomProperty6');
-    row['SystemID'] = get('CustomProperty8');
-    row['OS End of Life'] = getOSEndOfLife(osName);
-    row['Processor Age'] = getProcessorAge(proc);
-    row['RAM (GB)'] = mbToGB(ramMB);
-
-    rows.push(row);
+    rows.push({
+      'Device Name':      get('Name'),
+      'Client':           get('CustomProperty1'),
+      'Country':          country,
+      'State':            state,
+      'Region':           get('CustomProperty3'),
+      'Device Type':      get('CustomProperty4'),
+      'Bepoz Version':    get('CustomProperty6'),
+      'System ID':        get('CustomProperty8'),
+      'Machine Name':     get('GuestMachineName'),
+      'Domain':           get('GuestMachineDomain'),
+      'Manufacturer':     get('GuestMachineManufacturerName'),
+      'Model':            get('GuestMachineModel'),
+      'Serial Number':    get('GuestMachineSerialNumber'),
+      'Product Number':   get('GuestMachineProductNumber'),
+      'Operating System': get('GuestOperatingSystemName'),
+      'OS End of Life':   getOSEndOfLife(get('GuestOperatingSystemName')),
+      'Processor':        get('GuestProcessorName'),
+      'Processor Age':    getProcessorAge(get('GuestProcessorName')),
+      'CPU Cores':        get('GuestProcessorVirtualCount'),
+      'RAM':              mbToGB(get('GuestSystemMemoryTotalMegabytes')),
+      'Logged-in User':   get('GuestLoggedOnUserName'),
+      'User Domain':      get('GuestLoggedOnUserDomain'),
+      'Last Activity':    get('GuestLastActivityTime'),
+      'Last Boot':        get('GuestLastBootTime'),
+      'Last Updated':     get('GuestInfoUpdateTime'),
+      'Private IP':       get('GuestPrivateNetworkAddress'),
+      'MAC Address':      get('GuestHardwareNetworkAddress'),
+      'Timezone':         get('GuestTimeZoneName'),
+      'Connections':      get('ConnectionCount'),
+      'Session ID':       get('SessionID'),
+    });
   }
 
   return { headers: OUTPUT_COLUMNS, rows, count: rows.length };
@@ -266,13 +289,11 @@ runBtn.addEventListener('click', async () => {
   const typeFilter = sessionType.value;
   const nameSearch = searchEl.value.trim();
 
-  /* 1. Validate tab */
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) { log('No active tab found.'); return; }
 
   const origin = new URL(tab.url).origin;
 
-  /* 2. Build Report API URL — always fetch CSV for processing */
   const params = new URLSearchParams();
   params.set('ReportType', 'Session');
   FIELDS.forEach(f => params.append('SelectFields', f));
@@ -286,16 +307,14 @@ runBtn.addEventListener('click', async () => {
   if (filters.length) params.set('Filter', filters.join(' AND '));
   const reportUrl = `${origin}/Report.csv?${params.toString()}`;
 
-  /* 3. Loading state */
   const desc = [typeFilter, nameSearch ? `"${nameSearch}"` : ''].filter(Boolean).join(' ');
-  log(`Fetching${desc ? ` ${desc}` : ''} devices via Report API...`);
+  log(`Fetching${desc ? ` ${desc}` : ''} devices...`);
   runBtn.disabled = true;
   runBtn.querySelector('svg').outerHTML =
     '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
   runBtnText.textContent = 'Fetching...';
 
   try {
-    /* 4. Inject fetch into the page for auth cookies */
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: async (url) => {
@@ -304,72 +323,53 @@ runBtn.addEventListener('click', async () => {
           if (!r.ok) return { ok: false, error: `HTTP ${r.status}: ${r.statusText}` };
           const ct = r.headers.get('content-type') || '';
           return { ok: true, data: await r.text(), contentType: ct };
-        } catch (e) {
-          return { ok: false, error: e.message };
-        }
+        } catch (e) { return { ok: false, error: e.message }; }
       },
       args: [reportUrl],
       world: 'MAIN',
     });
 
-    /* 5. Handle errors */
     if (!result?.ok) {
       const err = result?.error || 'Unknown error';
-      if (/404|Not Found/i.test(err)) {
-        log('Report API not found. Is the Report Manager extension installed in ScreenConnect?');
-      } else if (/401|403|Unauthorized|Forbidden/i.test(err)) {
-        log('Not authenticated. Please log into ScreenConnect first.');
-      } else {
-        log(`Error: ${err}`);
-      }
+      if (/404|Not Found/i.test(err)) log('Report API not found. Is Report Manager installed?');
+      else if (/401|403|Unauthorized|Forbidden/i.test(err)) log('Not authenticated. Please log in first.');
+      else log(`Error: ${err}`);
       return;
     }
 
     if (result.contentType?.includes('text/html')) {
-      log('Received HTML instead of data. You may need to log in, or Report Manager may not be installed.');
+      log('Received HTML instead of data. Log in or check Report Manager is installed.');
       return;
     }
 
-    /* 6. If filter returned 0 rows, retry without it */
     let csvText = result.data;
-    if (filters.length) {
-      const lines = csvText.trim().split('\n');
-      if (lines.length <= 1) {
-        log('Filter returned no results. Retrying without filter...');
-        params.delete('Filter');
-        const retryUrl = `${origin}/Report.csv?${params.toString()}`;
-        const [{ result: r2 }] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: async (url) => {
-            try {
-              const r = await fetch(url, { credentials: 'include' });
-              if (!r.ok) return { ok: false };
-              return { ok: true, data: await r.text(), contentType: r.headers.get('content-type') || '' };
-            } catch (e) { return { ok: false }; }
-          },
-          args: [retryUrl],
-          world: 'MAIN',
-        });
-        if (r2?.ok && !r2.contentType?.includes('text/html')) {
-          csvText = r2.data;
-          log('Filter not supported — exporting all sessions.');
-        }
+    if (filters.length && csvText.trim().split('\n').length <= 1) {
+      log('Filter returned no results. Retrying without filter...');
+      params.delete('Filter');
+      const [{ result: r2 }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: async (url) => {
+          try { const r = await fetch(url, { credentials: 'include' }); if (!r.ok) return { ok: false }; return { ok: true, data: await r.text(), contentType: r.headers.get('content-type') || '' }; }
+          catch (e) { return { ok: false }; }
+        },
+        args: [`${origin}/Report.csv?${params.toString()}`],
+        world: 'MAIN',
+      });
+      if (r2?.ok && !r2.contentType?.includes('text/html')) {
+        csvText = r2.data;
+        log('Filter not supported — exporting all sessions.');
       }
     }
 
-    /* 7. Process and transform */
     const { headers, rows, count } = processData(csvText);
 
     resultBar.textContent = `${count} device${count === 1 ? '' : 's'} exported`;
     resultBar.style.display = 'block';
 
-    /* 8. Download in chosen format */
     if (format === 'json') {
-      const json = JSON.stringify(rows, null, 2);
-      download(json, `screenconnect-devices-${timestamp()}.json`, 'application/json');
+      download(JSON.stringify(rows, null, 2), `screenconnect-devices-${timestamp()}.json`, 'application/json');
     } else {
-      const csv = serializeCSV(headers, rows);
-      download(csv, `screenconnect-devices-${timestamp()}.csv`, 'text/csv;charset=utf-8');
+      download(serializeCSV(headers, rows), `screenconnect-devices-${timestamp()}.csv`, 'text/csv;charset=utf-8');
     }
     log(`Exported ${count} device(s) as ${format.toUpperCase()}.`);
 
