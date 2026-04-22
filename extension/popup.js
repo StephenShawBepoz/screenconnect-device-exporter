@@ -1,286 +1,181 @@
-const statusEl = document.getElementById('status');
-const runBtn   = document.getElementById('run');
-const stopBtn  = document.getElementById('stop');
-const progressContainer = document.getElementById('progressContainer');
-const progressFill  = document.getElementById('progressFill');
-const progressCount = document.getElementById('progressCount');
-const progressLabel = document.querySelector('.progress-label');
+const statusEl    = document.getElementById('status');
+const runBtn      = document.getElementById('run');
+const runBtnText  = runBtn.querySelector('span');
+const formatEl    = document.getElementById('format');
+const sessionType = document.getElementById('sessionType');
+
+/* ---------- helpers ---------- */
 
 function log(msg) {
   const t = new Date().toLocaleTimeString();
   statusEl.textContent = `[${t}] ${msg}\n` + statusEl.textContent;
 }
 
-function showProgress(current, total) {
-  progressContainer.classList.add('active');
-  progressCount.textContent = `${current} / ${total}`;
-  progressFill.style.width = total > 0 ? `${Math.round((current / total) * 100)}%` : '0%';
+function timestamp() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
 }
 
-function hideProgress() {
-  progressContainer.classList.remove('active');
-  progressFill.style.width = '0%';
-}
-
-let pollTimer = null;
-
-async function pollProgress(tabId) {
-  try {
-    const [{ result }] = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => window.__scProgress,
-      world: 'MAIN'
-    });
-    if (result) {
-      showProgress(result.current, result.total);
-      if (result.name) {
-        log(`${result.current}/${result.total}: ${result.name}`);
-      }
-    }
-  } catch (e) { /* ignore poll errors */ }
-}
-
-runBtn.addEventListener('click', async () => {
-  const delay = parseInt(document.getElementById('delay').value, 10) || 600;
-  const format = document.getElementById('format').value;
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !/screenconnect\.com/.test(tab.url || '')) {
-    log('Not on a ScreenConnect tab.');
-    return;
-  }
-
-  log('Scanning devices...');
-  if (progressLabel) progressLabel.textContent = 'Scanning devices...';
-  showProgress(0, 0);
-
-  // Poll for progress every 800ms
-  pollTimer = setInterval(() => pollProgress(tab.id), 800);
-
-  try {
-    const [{ result }] = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: collectDeep,
-      args: [delay],
-      world: 'MAIN'
-    });
-    clearInterval(pollTimer);
-    hideProgress();
-    if (!result || !result.rows || !result.rows.length) {
-      log('No rows collected.');
-      return;
-    }
-    if (format === 'json') {
-      const json = JSON.stringify(result.rows, null, 2);
-      download(json, `screenconnect-devices-${Date.now()}.json`, 'application/json');
-    } else {
-      const csv = toCSV(result.rows, result.columns);
-      download(csv, `screenconnect-devices-${Date.now()}.csv`, 'text/csv;charset=utf-8');
-    }
-    log(`Done! ${result.rows.length} device(s) exported as ${format.toUpperCase()}.`);
-  } catch (e) {
-    clearInterval(pollTimer);
-    hideProgress();
-    log('Error: ' + (e?.message || e));
-  }
-});
-
-stopBtn.addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: () => { window.__scStop = true; },
-    world: 'MAIN'
-  });
-  log('Stop signal sent.');
-});
-
-function toCSV(rows, columns) {
-  const escape = (v) => {
-    if (v == null) return '';
-    const s = String(v).replace(/\r?\n/g, ' ').trim();
-    return /[",]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const header = columns.map(escape).join(',');
-  const body = rows.map(r => columns.map(c => escape(r[c])).join(',')).join('\n');
-  return header + '\n' + body;
-}
-
-function download(text, filename, mime = 'text/csv;charset=utf-8') {
+function download(text, filename, mime) {
   const blob = new Blob([text], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// ====== Injected into MAIN world — fully self-contained ======
-async function collectDeep(delay) {
-  window.__scStop = false;
-  window.__scProgress = { current: 0, total: 0, name: '' };
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const getRows = () => Array.from(document.querySelectorAll('table.DetailTable tbody tr'));
+/* ---------- UI wiring ---------- */
 
-  // --- Inline row parser ---
-  const parseRowFields = (tr) => {
-    const name = tr.querySelector('h3.SessionTitle')?.textContent.trim() || '';
-    const pTags = tr.querySelectorAll('.SessionInfoPanel p');
-    const raw = {};
-    pTags.forEach(p => {
-      const title = (p.getAttribute('title') || '').trim();
-      if (title) raw[title] = title;
+formatEl.addEventListener('change', () => {
+  if (!runBtn.disabled) runBtnText.textContent = `Export ${formatEl.value.toUpperCase()}`;
+});
+
+/* ---------- Report API fields ---------- */
+
+const FIELDS = [
+  // Identity
+  'SessionID', 'Name', 'SessionType',
+  // Custom properties (1-8)
+  'CustomProperty1', 'CustomProperty2', 'CustomProperty3', 'CustomProperty4',
+  'CustomProperty5', 'CustomProperty6', 'CustomProperty7', 'CustomProperty8',
+  // Machine
+  'GuestMachineName', 'GuestMachineDomain', 'GuestMachineDescription',
+  'GuestMachineManufacturerName', 'GuestMachineModel',
+  'GuestMachineProductNumber', 'GuestMachineSerialNumber',
+  // Operating system
+  'GuestOperatingSystemName', 'GuestOperatingSystemVersion',
+  'GuestOperatingSystemManufacturerName', 'GuestOperatingSystemLanguage',
+  'GuestOperatingSystemInstallationTime',
+  // Processor & memory
+  'GuestProcessorName', 'GuestProcessorVirtualCount', 'GuestProcessorArchitecture',
+  'GuestSystemMemoryTotalMegabytes', 'GuestSystemMemoryAvailableMegabytes',
+  // Network
+  'GuestPrivateNetworkAddress', 'GuestHardwareNetworkAddress',
+  // User
+  'GuestLoggedOnUserName', 'GuestLoggedOnUserDomain', 'GuestIsLocalAdminPresent',
+  // Timestamps
+  'GuestLastActivityTime', 'GuestLastBootTime', 'GuestInfoUpdateTime',
+  // Timezone
+  'GuestTimeZoneName', 'GuestTimeZoneOffsetHours',
+  // Connection
+  'ConnectionCount',
+];
+
+/* ---------- export ---------- */
+
+runBtn.addEventListener('click', async () => {
+  const format = formatEl.value;
+  const typeFilter = sessionType.value;
+
+  /* 1. Validate tab */
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) { log('No active tab found.'); return; }
+
+  const origin = new URL(tab.url).origin;
+
+  /* 2. Build Report API URL */
+  const endpoint = format === 'json' ? 'Report.json' : 'Report.csv';
+  const params = new URLSearchParams();
+  params.set('ReportType', 'Session');
+  FIELDS.forEach(f => params.append('SelectFields', f));
+  if (typeFilter) params.set('Filter', `SessionType='${typeFilter}'`);
+  const reportUrl = `${origin}/${endpoint}?${params.toString()}`;
+
+  /* 3. Loading state */
+  log(`Fetching${typeFilter ? ` ${typeFilter}` : ''} devices via Report API...`);
+  runBtn.disabled = true;
+  runBtn.querySelector('svg').outerHTML =
+    '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
+  runBtnText.textContent = 'Fetching...';
+
+  try {
+    /* 4. Inject fetch into the page so it uses the existing auth cookies */
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: async (url) => {
+        try {
+          const r = await fetch(url, { credentials: 'include' });
+          if (!r.ok) return { ok: false, error: `HTTP ${r.status}: ${r.statusText}` };
+          const ct = r.headers.get('content-type') || '';
+          return { ok: true, data: await r.text(), contentType: ct };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      },
+      args: [reportUrl],
+      world: 'MAIN',
     });
-    const getField = (prefix) => {
-      for (const key of Object.keys(raw)) {
-        if (key.startsWith(prefix)) {
-          let val = key.substring(prefix.length).trim();
-          if (val.startsWith(':')) val = val.substring(1).trim();
-          return val;
+
+    /* 5. Handle errors */
+    if (!result?.ok) {
+      const err = result?.error || 'Unknown error';
+      if (/404|Not Found/i.test(err)) {
+        log('Report API not found. Is the Report Manager extension installed in ScreenConnect?');
+      } else if (/401|403|Unauthorized|Forbidden/i.test(err)) {
+        log('Not authenticated. Please log into ScreenConnect first.');
+      } else {
+        log(`Error: ${err}`);
+      }
+      return;
+    }
+
+    if (result.contentType?.includes('text/html')) {
+      log('Received an HTML page instead of data. You may need to log in, or the Report Manager extension may not be installed.');
+      return;
+    }
+
+    /* 6. If the session-type filter failed (returned 0 rows), retry without it */
+    if (typeFilter && format === 'csv') {
+      const lines = result.data.trim().split('\n');
+      if (lines.length <= 1) {
+        log(`No results for SessionType='${typeFilter}'. Retrying without filter...`);
+        params.delete('Filter');
+        const retryUrl = `${origin}/${endpoint}?${params.toString()}`;
+        const [{ result: r2 }] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: async (url) => {
+            try {
+              const r = await fetch(url, { credentials: 'include' });
+              if (!r.ok) return { ok: false, error: `HTTP ${r.status}` };
+              return { ok: true, data: await r.text(), contentType: r.headers.get('content-type') || '' };
+            } catch (e) { return { ok: false, error: e.message }; }
+          },
+          args: [retryUrl],
+          world: 'MAIN',
+        });
+        if (r2?.ok && !r2.contentType?.includes('text/html')) {
+          result.data = r2.data;
+          log('Filter not supported on this instance — exporting all sessions.');
         }
       }
-      return '';
-    };
-    const guest = tr.querySelector('.StatusDiagramPanel .Guest');
-    const online = guest ? (guest.classList.contains('Connected') ? 'Online' : 'Offline') : '';
-    const dbRaw = getField('Database Details');
-    const dbParts = dbRaw.split('|').map(s => s.trim());
-    const userRaw = getField('User');
-    let user = userRaw, idle = '';
-    const idleMatch = userRaw.match(/^(.+?)\s*\(Idle\s+(.+?)\)$/);
-    if (idleMatch) { user = idleMatch[1].trim(); idle = idleMatch[2].trim(); }
-    return {
-      'Name': name, 'Online/Offline': online,
-      'GROUP': getField('GROUP'), 'STATE': getField('STATE'),
-      'Business Unit': getField('Business Unit'), 'Device Type': getField('Device Type'),
-      'Manufacturer': dbParts[0] || '', 'Model': dbParts[1] || '',
-      'OS': dbParts[2] || '', '.NET Version': dbParts[3] || '',
-      'POS Version': getField('POS Version'),
-      'Access Restriction Level': getField('Access Restriction Level'),
-      'SystemID': getField('SystemID'), 'User': user, 'Idle Time': idle
-    };
-  };
-
-  // --- Detail panel helpers ---
-  const getPanelFingerprint = () => {
-    const dds = document.querySelectorAll('.DetailTabContent .CollapsiblePanel .Content dl dd');
-    return Array.from(dds).map(dd => dd.textContent.trim()).join('|');
-  };
-
-  const getPanelSessionName = () => {
-    const dls = document.querySelectorAll('.DetailTabContent .CollapsiblePanel .Content dl');
-    for (const dl of dls) {
-      const dts = dl.querySelectorAll('dt');
-      const dds = dl.querySelectorAll('dd');
-      for (let i = 0; i < dts.length; i++) {
-        if (dts[i].textContent.trim().replace(/:$/, '') === 'Name')
-          return (dds[i]?.textContent || '').trim();
-      }
-    }
-    return '';
-  };
-
-  const waitForPanel = async (expectedName, prevFP, timeoutMs = 10000) => {
-    const start = Date.now();
-    // Phase 1: wait for panel Name to match the device we clicked
-    while (Date.now() - start < timeoutMs) {
-      const loading = document.querySelector('.QueuedGuestInfoActivityIndicator')?.offsetHeight > 0;
-      if (!loading) {
-        const name = getPanelSessionName();
-        if (name === expectedName) {
-          // Name matches — give a brief moment for remaining fields to populate
-          await sleep(300);
-          return true;
-        }
-      }
-      await sleep(150);
-    }
-    // Phase 2: if name never matched (truncated name?), accept fingerprint change
-    const fp = getPanelFingerprint();
-    if (prevFP && fp !== prevFP) {
-      await sleep(500);
-      return true;
-    }
-    return false;
-  };
-
-  const parsePanel = () => {
-    const data = {};
-    document.querySelectorAll('.DetailTabContent .CollapsiblePanel').forEach(p => {
-      const section = p.querySelector('.Header')?.textContent.trim() || 'Other';
-      const dl = p.querySelector('.Content dl');
-      if (!dl) return;
-      const dts = dl.querySelectorAll('dt');
-      const dds = dl.querySelectorAll('dd');
-      for (let i = 0; i < dts.length; i++) {
-        const k = dts[i].textContent.trim().replace(/:$/, '');
-        data[`${section}.${k}`] = (dds[i]?.textContent || '').trim();
-      }
-    });
-    return data;
-  };
-
-  const parseMemoryToGB = (s) => {
-    if (!s) return '';
-    const m = s.match(/(\d+(?:\.\d+)?)\s*MB\s*\/\s*(\d+(?:\.\d+)?)\s*MB/i);
-    if (m) return Math.ceil(parseFloat(m[2]) / 1024) + ' GB';
-    const gbMatch = s.match(/(\d+(?:\.\d+)?)\s*GB/i);
-    if (gbMatch) return Math.ceil(parseFloat(gbMatch[1])) + ' GB';
-    const mbMatch = s.match(/(\d+(?:\.\d+)?)\s*MB/i);
-    if (mbMatch) return Math.ceil(parseFloat(mbMatch[1]) / 1024) + ' GB';
-    return s;
-  };
-
-  // --- Main loop ---
-  const rows = getRows();
-  const total = rows.length;
-  window.__scProgress = { current: 0, total, name: 'Starting...' };
-  const results = [];
-  const seen = new Set();
-
-  for (let i = 0; i < total; i++) {
-    if (window.__scStop) break;
-    const tr = getRows()[i];
-    if (!tr) continue;
-
-    const rec = parseRowFields(tr);
-    if (!rec['Name'] || seen.has(rec['Name'])) continue;
-    seen.add(rec['Name']);
-
-    // Select row via full mouse event sequence on the <tr>
-    const prevFP = getPanelFingerprint();
-    tr.scrollIntoView({ block: 'center' });
-    const evtOpts = { bubbles: true, cancelable: true, view: window };
-    tr.dispatchEvent(new MouseEvent('mousedown', evtOpts));
-    tr.dispatchEvent(new MouseEvent('mouseup', evtOpts));
-    tr.click();
-    await sleep(300);
-    const loaded = await waitForPanel(rec['Name'], prevFP);
-    await sleep(delay);
-
-    if (loaded) {
-      const panel = parsePanel();
-      rec['Machine'] = panel['Device.Machine'] || '';
-      rec['Processor'] = panel['Device.Processor(s)'] || '';
-      rec['RAM'] = parseMemoryToGB(panel['Device.Available Memory'] || '');
-      rec['RAM (raw)'] = panel['Device.Available Memory'] || '';
-      rec['Manufacturer & Model'] = panel['Device.Manufacturer & Model'] || '';
-      rec['OS (full)'] = panel['Device.Operating System'] || '';
-      rec['OS Installed'] = panel['Device.Operating System Installation'] || '';
-      rec['Machine Product/Serial'] = panel['Device.Machine Product/Serial'] || '';
     }
 
-    results.push(rec);
-    window.__scProgress = { current: results.length, total, name: rec['Name'] };
-    console.log(`[SC Exporter] ${results.length}/${total}: ${rec['Name']}`);
+    /* 7. Count records */
+    let count = '?';
+    if (format === 'csv') {
+      count = Math.max(0, result.data.trim().split('\n').length - 1);
+    } else {
+      try { const p = JSON.parse(result.data); count = Array.isArray(p) ? p.length : '?'; } catch {}
+    }
+
+    /* 8. Download */
+    const ext  = format === 'json' ? 'json' : 'csv';
+    const mime = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8';
+    download(result.data, `screenconnect-devices-${timestamp()}.${ext}`, mime);
+    log(`Exported ${count} device(s) as ${format.toUpperCase()}.`);
+
+  } catch (e) {
+    log('Error: ' + (e?.message || e));
+  } finally {
+    /* 9. Restore button */
+    runBtn.disabled = false;
+    runBtn.querySelector('svg').outerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    runBtnText.textContent = `Export ${formatEl.value.toUpperCase()}`;
   }
-
-  const columns = [
-    'Name', 'Online/Offline', 'GROUP', 'STATE', 'Business Unit',
-    'Device Type', 'Machine', 'Manufacturer & Model', 'OS (full)', 'Processor', 'RAM',
-    'Manufacturer', 'Model', 'OS', '.NET Version',
-    'POS Version', 'Access Restriction Level', 'SystemID', 'User', 'Idle Time',
-    'OS Installed', 'RAM (raw)', 'Machine Product/Serial'
-  ];
-  return { rows: results, columns };
-}
+});

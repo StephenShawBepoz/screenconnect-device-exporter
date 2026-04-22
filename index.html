@@ -302,9 +302,9 @@
           <line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
       </div>
-      <span class="version">v2.0.0</span>
+      <span class="version">v3.0.0</span>
       <h1>ScreenConnect Device Exporter</h1>
-      <p class="subtitle">Export device details from ScreenConnect to a spreadsheet in one click. Gets hardware specs, RAM, OS, and session info for every device in a group.</p>
+      <p class="subtitle">Export device details from any ScreenConnect instance to a spreadsheet in one click. Powered by the Report API &mdash; fetches all devices instantly instead of clicking through them one by one.</p>
       <p class="compat">Works with <strong>Google Chrome</strong> and <strong>Microsoft Edge</strong> (any Chromium browser).</p>
       <a class="download-btn" href="screenconnect-device-exporter.zip" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -524,14 +524,14 @@
     <!-- How to use -->
     <div class="section">
       <h2>How to Use</h2>
-      <p class="section-desc">Once installed, exporting device info takes about 30 seconds per group.</p>
+      <p class="section-desc">Once installed, exporting takes seconds &mdash; no scrolling or waiting required.</p>
       <div class="steps">
         <div class="step">
           <div class="step-header">
             <div class="step-number">1</div>
             <div class="step-content">
-              <h3>Go to your ScreenConnect group</h3>
-              <p>Open ScreenConnect in your browser. Go to <strong>Access</strong> and click the session group you want to export (e.g. "Kilmore Racing" or "Bepoz").</p>
+              <h3>Open ScreenConnect</h3>
+              <p>Go to any page in your ScreenConnect instance and make sure you're logged in.</p>
             </div>
           </div>
         </div>
@@ -539,8 +539,9 @@
           <div class="step-header">
             <div class="step-number">2</div>
             <div class="step-content">
-              <h3>Scroll through the device list</h3>
-              <p>The device list in the middle column only loads devices as you scroll. <strong>Scroll all the way to the bottom</strong> of the list so every device is visible before exporting.</p>
+              <h3>Click the extension and hit Export</h3>
+              <p>Click the <strong>Device Exporter</strong> icon in your toolbar. Choose <strong>CSV</strong> or <strong>JSON</strong>, pick a session type (defaults to <strong>Access</strong>), then click <span class="action-text">Export CSV</span>.</p>
+              <p style="margin-top:6px;">The extension fetches all devices via the Report API in one request &mdash; no clicking through devices one by one.</p>
             </div>
           </div>
         </div>
@@ -548,19 +549,8 @@
           <div class="step-header">
             <div class="step-number">3</div>
             <div class="step-content">
-              <h3>Click the extension icon and hit Export</h3>
-              <p>Click the <strong>Device Exporter</strong> icon in your toolbar. Choose <strong>CSV</strong> or <strong>JSON</strong> as your format, then click <span class="action-text">Export to CSV</span>.</p>
-              <p style="margin-top:6px;">The extension will automatically click through each device and collect its details. You'll see a progress bar showing how far along it is.</p>
-            </div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-header">
-            <div class="step-number">4</div>
-            <div class="step-content">
               <h3>Open the downloaded file</h3>
-              <p>When it's done, a file will download automatically. Open it in <strong>Excel</strong>, <strong>Google Sheets</strong>, or <strong>Numbers</strong> to see all your device data in a spreadsheet.</p>
-              <p style="margin-top:6px;">You can click <strong>Stop</strong> at any time if you don't want to wait for all devices.</p>
+              <p>A file will download automatically within seconds. Open it in <strong>Excel</strong>, <strong>Google Sheets</strong>, or <strong>Numbers</strong> to see all your device data.</p>
             </div>
           </div>
         </div>
@@ -570,46 +560,62 @@
     <!-- Exported Fields -->
     <div class="section">
       <h2>What Data Gets Exported</h2>
-      <p class="section-desc">Every row in the spreadsheet includes these fields (when available):</p>
+      <p class="section-desc">Every row includes these fields (when available). v3.0 exports significantly more data than v2.</p>
       <div class="fields-grid">
+        <div class="field-tag">Session ID</div>
         <div class="field-tag">Device Name</div>
-        <div class="field-tag">Online / Offline</div>
-        <div class="field-tag">GROUP</div>
-        <div class="field-tag">STATE</div>
-        <div class="field-tag">Business Unit</div>
-        <div class="field-tag">Device Type</div>
+        <div class="field-tag">Session Type</div>
+        <div class="field-tag">Custom Properties 1-8</div>
         <div class="field-tag">Machine Name</div>
-        <div class="field-tag">Manufacturer &amp; Model</div>
-        <div class="field-tag">Operating System</div>
-        <div class="field-tag">Processor (CPU)</div>
-        <div class="field-tag">RAM</div>
-        <div class="field-tag">.NET Version</div>
-        <div class="field-tag">POS Version</div>
-        <div class="field-tag">Access Restriction Level</div>
-        <div class="field-tag">System ID</div>
-        <div class="field-tag">Logged-in User</div>
-        <div class="field-tag">Idle Time</div>
-        <div class="field-tag">OS Install Date</div>
+        <div class="field-tag">Domain</div>
+        <div class="field-tag">Manufacturer</div>
+        <div class="field-tag">Model</div>
         <div class="field-tag">Serial Number</div>
+        <div class="field-tag">Product Number</div>
+        <div class="field-tag">Operating System</div>
+        <div class="field-tag">OS Version</div>
+        <div class="field-tag">OS Language</div>
+        <div class="field-tag">OS Install Date</div>
+        <div class="field-tag">Processor (CPU)</div>
+        <div class="field-tag">CPU Core Count</div>
+        <div class="field-tag">CPU Architecture</div>
+        <div class="field-tag">Total RAM (MB)</div>
+        <div class="field-tag">Available RAM (MB)</div>
+        <div class="field-tag">Private IP Address</div>
+        <div class="field-tag">MAC Address</div>
+        <div class="field-tag">Logged-in User</div>
+        <div class="field-tag">User Domain</div>
+        <div class="field-tag">Local Admin Present</div>
+        <div class="field-tag">Last Activity Time</div>
+        <div class="field-tag">Last Boot Time</div>
+        <div class="field-tag">Info Update Time</div>
+        <div class="field-tag">Timezone</div>
+        <div class="field-tag">Connection Count</div>
       </div>
     </div>
 
     <!-- Tips -->
     <div class="section">
       <div class="note">
-        <strong>Running slowly?</strong> The default delay between devices is 600ms. If your connection to ScreenConnect is slow and some devices are showing blank hardware info, try increasing the delay to 1000 or 1500 in the extension popup.
+        <strong>Requires Report Manager.</strong> This extension uses the built-in ScreenConnect Report API. If you get a "Report API not found" error, the Report Manager extension may need to be enabled in your ScreenConnect Admin &gt; Extensions.
       </div>
     </div>
 
     <div class="section">
       <div class="note">
-        <strong>Some fields are blank?</strong> This is normal. Devices that are offline or have an older ScreenConnect agent may not report all hardware details (like RAM or Processor). The extension exports whatever ScreenConnect has available.
+        <strong>Some fields are blank?</strong> This is normal. Devices that are offline or have an older ScreenConnect agent may not report all hardware details (like RAM or Processor). The extension exports whatever ScreenConnect has stored.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="note">
+        <strong>Works on any instance.</strong> This extension is not limited to screenconnect.com &mdash; it works on self-hosted and custom-domain ScreenConnect instances too. Just open your instance, log in, and click Export.
       </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-      <p>Built by <a href="mailto:stephen.shaw@bepoz.com.au">stephen.shaw@bepoz.com.au</a> &middot; <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v2.0.0%0ABrowser%3A%0ADescribe%20the%20issue%3A%0A">Report an issue</a></p>
+      <p>Built by <a href="mailto:stephen.shaw@bepoz.com.au">stephen.shaw@bepoz.com.au</a> &middot; <a href="mailto:stephen.shaw@bepoz.com.au?subject=Device%20Exporter%20Issue&body=Version%3A%20v3.0.0%0ABrowser%3A%0ADescribe%20the%20issue%3A%0A">Report an issue</a></p>
     </div>
 
   </div>
