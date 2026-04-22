@@ -4,6 +4,7 @@ const runBtnText  = runBtn.querySelector('span');
 const formatEl    = document.getElementById('format');
 const sessionType = document.getElementById('sessionType');
 const searchEl    = document.getElementById('search');
+const resultBar   = document.getElementById('resultBar');
 
 /* ---------- helpers ---------- */
 
@@ -174,7 +175,10 @@ runBtn.addEventListener('click', async () => {
       try { const p = JSON.parse(result.data); count = Array.isArray(p) ? p.length : '?'; } catch {}
     }
 
-    /* 8. Download */
+    /* 8. Show count + download */
+    resultBar.textContent = `${count} device${count === 1 ? '' : 's'} exported`;
+    resultBar.style.display = 'block';
+
     const ext  = format === 'json' ? 'json' : 'csv';
     const mime = format === 'json' ? 'application/json' : 'text/csv;charset=utf-8';
     download(result.data, `screenconnect-devices-${timestamp()}.${ext}`, mime);
